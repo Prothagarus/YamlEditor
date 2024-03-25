@@ -1,0 +1,9 @@
+all:
+  project:
+  - projectname: tesm
+    experimentname:
+      experimentversion:
+        assembly2:
+          channel1:
+            z: [90, 199]
+            wildchange: {thing1: 7, thing2: 8}

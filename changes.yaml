@@ -1,2 +1,0 @@
-all:project:experiment:experimentversion:assembly1:channel1:y: {test: {oops: [7,6]} ,test2: [9,9]}
-all:project:experiment:experimentversion:assembly2:channel1:wildchange: [test1: 1 ,test2: 2 ]

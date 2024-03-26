@@ -1,0 +1,11 @@
+project:
+  projectname: DRAGON
+  experiment:
+    experimentname: testDragons
+    experimentversion:
+      number: 1
+      xfiles: C:/xfiles
+      yfiles: C:/yfiles
+      zfiles: C:/zfiles
+      zfilename: zcoords.csv
+      

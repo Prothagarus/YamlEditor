@@ -1,0 +1,17 @@
+project:
+  projectname: DRAGON
+  experiment:
+    experimentname: testDragons
+    experimentversion:
+      number: 1
+      assembly1:
+        channel1:
+          x: { entries: [1, 2] }
+          y: [3, 4]
+          z: [1, 2]
+      assembly2:
+        channel1:
+          x: [1, 2]
+          y: [24, 3]
+          z: [1, 2]
+          wildchange: { thing1: 1, thing2: 2 }

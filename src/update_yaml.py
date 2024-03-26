@@ -1,7 +1,10 @@
 import sys
+import os
+import shutil
 import ruamel.yaml
-from  ruamel.yaml import YAML
+from ruamel.yaml import YAML
 import argparse
+
 def update_yaml_element(yaml_data, path_value_pairs):
     """
     Update multiple nested elements in a YAML data structure.
@@ -25,6 +28,78 @@ def update_yaml_element(yaml_data, path_value_pairs):
         # Check if the new value is not None or an empty dictionary/list
         if new_value is not None and new_value != {}:
             current_data[path[-1]] = new_value
+
+def apply_changes_and_output(input_file, changes_file, output_dir):
+    # Initialize the YAML parser
+    yaml = YAML()
+    if output_dir is not None:
+        if not os.path.isabs(output_dir):
+            output_dir = os.path.abspath(output_dir)
+    # Load the input YAML content
+    with open(input_file, 'r') as f:
+        data = yaml.load(f)
+
+    # Load the changes YAML content
+    with open(changes_file, 'r') as f:
+        changes_list = yaml.load(f)
+    for case_dict in changes_list['cases']:
+        case_value = case_dict['case']
+        
+        # Apply the changes to the data
+        for change_path, change_value in case_dict.items():
+            if change_path == 'case':
+                continue # Skip the 'case' key as it's not a change
+            if change_path == 'output_type':
+                output_type = change_value
+                continue
+            keys = change_path.split(':')
+            current_data = data
+            for key in keys[:-1]:
+                try:
+                    key = int(key) # Convert to integer if possible
+                except ValueError:
+                    pass # Keep as string if not convertible to integer
+                current_data = current_data[key]
+            current_data[keys[-1]] = change_value    
+                
+        if output_dir is None:
+            print("No output file specified. Results will be printed to the console.")
+            print(f"Case_{case_value}:")
+            yaml = ruamel.yaml.YAML()
+            yaml.dump(data, sys.stdout)
+
+    # Loop through each case in the changes list
+        else:
+        
+        # Create a directory for this case
+            if not os.path.exists(os.path.join(output_dir, f"{case_value}")):
+                case_dir = os.path.join(output_dir, f"{case_value}")
+                os.makedirs(case_dir, exist_ok=True)
+            case_dir = os.path.join(output_dir, f"{case_value}")
+            # Create subdirectories for output and config
+            output_subdir = os.path.join(case_dir, "output")
+            config_subdir = os.path.join(case_dir, "config")
+            if not os.path.exists(os.path.join(output_subdir, f"{case_value}")):
+                os.makedirs(output_subdir, exist_ok=True)
+            if not os.path.exists(os.path.join(config_subdir, f"{case_value}")):
+                os.makedirs(config_subdir, exist_ok=True)
+
+
+        # Output the modified data for this case to the specified output file
+            # output_file_path = os.path.join(output_subdir, f"{output_type}.yaml")
+            # with open(output_file_path, 'w') as f:
+            #     yaml.dump(data, f)
+            # print(f"Case_{case_value}:")      
+            output_file_path = os.path.join(output_subdir, f"{output_type}.yaml")
+            with open(output_file_path, 'w') as f:
+                yaml.dump(data, f)
+            print(f"Modified data for case {case_value} has been written to {output_file_path}\n")
+
+            # Store the portion of the config YAML used to make that output
+            config_file_path = os.path.join(config_subdir, f"{output_type}_config.yaml")
+            with open(config_file_path, 'w') as f:
+                yaml.dump(case_dict, f)
+            print(f"Config for case {case_value} has been written to {config_file_path}\n")
 def print_keys(data, path='', depth=0, max_depth=None):
     """
     Recursively print the paths to all keys in the YAML data structure, focusing on the lowest-level dictionaries.
@@ -86,54 +161,26 @@ def print_paths(data, path=''):
     else:
         print(path)
 def main():
-    parser = argparse.ArgumentParser(description='Update a YAML file dynamically with multiple changes.')
-    parser.add_argument('file', help='The YAML file to update.')
-    parser.add_argument('-p', '--path', nargs='+', help='Paths to the elements to update, separated by colons.')
-    parser.add_argument('-v', '--value', nargs='+', help='New values to set for the specified elements.')
-    parser.add_argument('-k', '--keyvals', action='store_true', help='show all key values in an input')
-    
-    parser.add_argument('-o', '--output', action='store', dest='output', help="Directs the output to a name of your choice")
-    parser.add_argument('-i','--inputargprint',action='store_true',help="Prints all possible arguments to edit incoming yaml")
-    parser.add_argument('--changes-file', action='store', dest='changes_file', help="A YAML file containing the changes to apply.")
+    parser = argparse.ArgumentParser(description='Apply changes from a YAML file to another and output the result to generated output folder with subfolders containing the changes and the output.')
+    parser.add_argument('-i','--input_file',required=True ,help='The input YAML file to modify.')
+    parser.add_argument('-c','--changes_file', help='The YAML file containing the changes to apply.')
+    parser.add_argument('-o', '--output',  help='The output directory to write the modified data and config to.')
+    parser.add_argument('-iap','--inputargprint',action='store_true',help="Prints all possible arguments to edit incoming yaml")
     args = parser.parse_args()
-
-    # Initialize the YAML parser
-    yamlp = ruamel.yaml.YAML()
-
-    # Load the YAML content
-    with open(args.file, 'r') as f:
-        data = yamlp.load(f)
-
-    if args.inputargprint:
-       print_keys(data)
-    if args.keyvals:
-       print_paths(data)
-       #print_paths(data)
-    # Prepare path-value pairs
-    path_value_pairs = []
-    if args.path and args.value:
-        path_value_pairs = list(zip(args.path, args.value))
-
-    # Load and apply changes from the specified YAML file if provided
-    if args.changes_file:
-        with open(args.changes_file, 'r') as f:
-            changes = yamlp.load(f)
-            for path, new_value in changes.items():
-                path_value_pairs.append((path, new_value))
-
-    # Update the specified elements
-    update_yaml_element(data, path_value_pairs)
-    # Dump the updated dictionary back to the output file
-    if args.output is not None:
-        with open(args.output, 'w') as f:
-            yamlp.dump(data, f)
-    else:
-        print("No output file specified. Results will be printed to the console.")
-      
-        yaml = ruamel.yaml.YAML()
-        yaml.dump(data, sys.stdout)
-        #out = ruamel.yaml.dump(data)
     
+
+    if args.input_file:
+            
+
+        if args.inputargprint:
+            yaml = YAML()
+            with open(args.input_file, 'r') as f:
+                data = yaml.load(f)
+                print_keys(data)
+    if args.changes_file:
+
+    # Apply changes and output the result
+        apply_changes_and_output(args.input_file, args.changes_file, args.output)
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,9 @@
+cases: 
+  - case: oopstest1
+    output_type: inputdatasources
+    project:experiment:experimentversion:xfiles: //networkshare/xfiles
+    project:experiment:experimentversion:yfiles: //networkshare/xfiles
+  - case: oopstest2
+    output_type: inputdatasources
+    project:experiment:experimentversion:xfiles: //networkshare/xfiles
+    project:experiment:experimentversion:yfiles: //networkshare/yfiles

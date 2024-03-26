@@ -1,0 +1,9 @@
+cases: 
+  - case: oopstest1
+    output_type: pdr
+    project:experiment:experimentversion:assembly1:channel1:y: { test: { oops: [1, 1] }, test2: [1, 1] }
+    project:experiment:experimentversion:assembly2:channel1:wildchange: [test1: 1, test2: 2]
+  - case: oopstest2
+    output_type: pdr
+    project:experiment:experimentversion:assembly1:channel1:y: { test: { oops: [2, 2] }, test2: [2, 2] }
+    project:experiment:experimentversion:assembly2:channel1:wildchange: [test1: 1, test2: 2]
